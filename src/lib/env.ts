@@ -1,46 +1,52 @@
-import { z } from "zod";
+// Lenient env accessor. Modules that need a specific var (e.g. r2.ts, resend.ts)
+// validate at their own point of use, so public pages can render even when
+// third-party creds aren't set yet.
 
-const schema = z.object({
-  DATABASE_URL: z.string().url(),
-  DIRECT_URL: z.string().url().optional(),
-
-  AUTH_SECRET: z.string().min(1),
-  AUTH_URL: z.string().url().optional(),
-  AUTH_GITHUB_ID: z.string().min(1),
-  AUTH_GITHUB_SECRET: z.string().min(1),
-  ADMIN_EMAIL_ALLOWLIST: z.string().min(1),
-
-  R2_ACCOUNT_ID: z.string().min(1),
-  R2_ACCESS_KEY_ID: z.string().min(1),
-  R2_SECRET_ACCESS_KEY: z.string().min(1),
-  R2_BUCKET_NAME: z.string().min(1),
-  R2_PUBLIC_URL: z.string().url(),
-
-  RESEND_API_KEY: z.string().min(1),
-  RESEND_FROM: z.string().min(1),
-  CONTACT_INBOX: z.string().email(),
-
-  BUTTONDOWN_API_KEY: z.string().min(1),
-
-  NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().min(1),
-  TURNSTILE_SECRET_KEY: z.string().min(1),
-
-  NEXT_PUBLIC_SITE_URL: z.string().url(),
-});
-
-const parsed = schema.safeParse(process.env);
-
-if (!parsed.success) {
-  console.error(
-    "Invalid environment variables:",
-    parsed.error.flatten().fieldErrors,
-  );
-  throw new Error("Invalid environment variables");
+function get(key: string): string | undefined {
+  const value = process.env[key];
+  return value && value.length > 0 ? value : undefined;
 }
 
-export const env = parsed.data;
+function required(key: string): string {
+  const value = get(key);
+  if (!value) throw new Error(`Missing required env var: ${key}`);
+  return value;
+}
 
-export const adminEmailAllowlist = env.ADMIN_EMAIL_ALLOWLIST
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
+export const env = {
+  DATABASE_URL: () => required("DATABASE_URL"),
+  DIRECT_URL: () => get("DIRECT_URL"),
+
+  AUTH_SECRET: () => required("AUTH_SECRET"),
+  AUTH_URL: () => get("AUTH_URL"),
+  AUTH_GITHUB_ID: () => required("AUTH_GITHUB_ID"),
+  AUTH_GITHUB_SECRET: () => required("AUTH_GITHUB_SECRET"),
+  ADMIN_EMAIL_ALLOWLIST: () => get("ADMIN_EMAIL_ALLOWLIST") ?? "",
+
+  R2_ACCOUNT_ID: () => required("R2_ACCOUNT_ID"),
+  R2_ACCESS_KEY_ID: () => required("R2_ACCESS_KEY_ID"),
+  R2_SECRET_ACCESS_KEY: () => required("R2_SECRET_ACCESS_KEY"),
+  R2_BUCKET_NAME: () => required("R2_BUCKET_NAME"),
+  R2_PUBLIC_URL: () => required("R2_PUBLIC_URL"),
+
+  RESEND_API_KEY: () => required("RESEND_API_KEY"),
+  RESEND_FROM: () => required("RESEND_FROM"),
+  CONTACT_INBOX: () => required("CONTACT_INBOX"),
+
+  BUTTONDOWN_API_KEY: () => required("BUTTONDOWN_API_KEY"),
+
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: () =>
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "",
+  TURNSTILE_SECRET_KEY: () => required("TURNSTILE_SECRET_KEY"),
+
+  NEXT_PUBLIC_SITE_URL: () =>
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+};
+
+export function adminEmailAllowlist(): string[] {
+  return env
+    .ADMIN_EMAIL_ALLOWLIST()
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
