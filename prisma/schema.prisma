@@ -1,0 +1,307 @@
+// danlabrador.com v2 — data model
+// Regenerate client with: npx prisma generate
+// Push schema to DB (dev):  npx prisma db push
+// Create migration:         npx prisma migrate dev --name <label>
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth.js (NextAuth v5) tables ─────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Content: blog ────────────────────────────────────────────────────────
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Post {
+  id                 String     @id @default(cuid())
+  slug               String     @unique
+  title              String
+  excerpt            String?    @db.Text
+  bodyJson           Json
+  coverImageId       String?
+  seoTitle           String?
+  seoDescription     String?    @db.Text
+  ogImageOverrideId  String?
+  status             PostStatus @default(DRAFT)
+  publishedAt        DateTime?
+  readingTimeMinutes Int?
+  previewToken       String?    @unique
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  coverImage      MediaAsset?    @relation("PostCover", fields: [coverImageId], references: [id])
+  ogImageOverride MediaAsset?    @relation("PostOg", fields: [ogImageOverrideId], references: [id])
+  tags            PostTag[]
+  categories      PostCategory[]
+
+  @@index([status, publishedAt])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  posts PostTag[]
+}
+
+model PostTag {
+  postId String
+  tagId  String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  posts PostCategory[]
+}
+
+model PostCategory {
+  postId     String
+  categoryId String
+
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+}
+
+// ─── Content: projects ────────────────────────────────────────────────────
+model Project {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  tagline       String?
+  description   String   @db.Text
+  techTags      String[]
+  thumbnailId   String?
+  repoUrl       String?
+  liveUrl       String?
+  caseStudyBody Json?
+  featured      Boolean  @default(false)
+  displayOrder  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  thumbnail MediaAsset? @relation("ProjectThumb", fields: [thumbnailId], references: [id])
+
+  @@index([featured, displayOrder])
+}
+
+// ─── Content: homepage sections ───────────────────────────────────────────
+model Skill {
+  id           String  @id @default(cuid())
+  label        String
+  iconName     String? // lucide or simple-icons slug
+  iconAssetId  String? // fallback: uploaded SVG
+  category     String?
+  proficiency  Int?
+  displayOrder Int     @default(0)
+
+  iconAsset MediaAsset? @relation("SkillIcon", fields: [iconAssetId], references: [id])
+
+  @@index([displayOrder])
+}
+
+model Experience {
+  id            String    @id @default(cuid())
+  role          String
+  company       String
+  companyLogoId String?
+  startDate     DateTime
+  endDate       DateTime?
+  bulletsJson   Json // array of strings
+  displayOrder  Int       @default(0)
+
+  companyLogo MediaAsset? @relation("ExpLogo", fields: [companyLogoId], references: [id])
+
+  @@index([displayOrder])
+}
+
+model Education {
+  id           String    @id @default(cuid())
+  program      String
+  institution  String
+  startDate    DateTime?
+  endDate      DateTime?
+  displayOrder Int       @default(0)
+}
+
+model Testimonial {
+  id             String  @id @default(cuid())
+  quote          String  @db.Text
+  authorName     String
+  authorRole     String?
+  authorAvatarId String?
+  sourceUrl      String?
+  displayOrder   Int     @default(0)
+
+  authorAvatar MediaAsset? @relation("TestimonialAvatar", fields: [authorAvatarId], references: [id])
+
+  @@index([displayOrder])
+}
+
+model ContactLink {
+  id           String  @id @default(cuid())
+  label        String
+  url          String
+  iconName     String? // lucide/simple-icons slug
+  displayOrder Int     @default(0)
+}
+
+// ─── Content: singletons (about, now) + uses list ─────────────────────────
+model AboutContent {
+  id              String   @id @default("singleton")
+  heroHeadline    String
+  heroSubheadline String?
+  aboutBody       Json?
+  updatedAt       DateTime @updatedAt
+}
+
+model NowPage {
+  id        String   @id @default("singleton")
+  body      Json?
+  updatedAt DateTime @updatedAt
+}
+
+model UsesItem {
+  id           String  @id @default(cuid())
+  category     String // Hardware, Software, Services, etc.
+  label        String
+  description  String?
+  url          String?
+  displayOrder Int     @default(0)
+
+  @@index([category, displayOrder])
+}
+
+// ─── Resume ───────────────────────────────────────────────────────────────
+model Resume {
+  id           String   @id @default(cuid())
+  fileUrl      String
+  r2Key        String
+  versionLabel String?
+  isCurrent    Boolean  @default(false)
+  uploadedAt   DateTime @default(now())
+
+  @@index([isCurrent])
+}
+
+// ─── Media library ────────────────────────────────────────────────────────
+model MediaAsset {
+  id         String   @id @default(cuid())
+  url        String
+  r2Key      String   @unique
+  mimeType   String
+  width      Int?
+  height     Int?
+  bytes      Int?
+  altText    String?
+  uploadedAt DateTime @default(now())
+
+  postCovers         Post[]        @relation("PostCover")
+  postOg             Post[]        @relation("PostOg")
+  projectThumbnails  Project[]     @relation("ProjectThumb")
+  skillIcons         Skill[]       @relation("SkillIcon")
+  experienceLogos    Experience[]  @relation("ExpLogo")
+  testimonialAvatars Testimonial[] @relation("TestimonialAvatar")
+}
+
+// ─── Contact form submissions ─────────────────────────────────────────────
+model ContactSubmission {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  message     String    @db.Text
+  projectType String?
+  budget      String?
+  timeline    String?
+  ipHash      String?
+  userAgent   String?
+  readAt      DateTime?
+  submittedAt DateTime  @default(now())
+
+  @@index([submittedAt])
+}
+
+// ─── Newsletter (mirror of Buttondown) ────────────────────────────────────
+enum SubscriberStatus {
+  PENDING
+  ACTIVE
+  UNSUBSCRIBED
+}
+
+model NewsletterSubscriber {
+  id           String           @id @default(cuid())
+  email        String           @unique
+  buttondownId String?
+  status       SubscriberStatus @default(PENDING)
+  subscribedAt DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
