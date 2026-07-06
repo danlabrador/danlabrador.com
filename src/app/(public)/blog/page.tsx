@@ -10,9 +10,8 @@ export const metadata: Metadata = {
     "Notes on analytics engineering, tooling, and the craft of turning messy data into useful systems.",
 };
 
-export default function BlogIndex() {
-  const posts = getPublishedPosts();
-  const tags = getAllTags();
+export default async function BlogIndex() {
+  const [posts, tags] = await Promise.all([getPublishedPosts(), getAllTags()]);
 
   return (
     <Container className="py-20">

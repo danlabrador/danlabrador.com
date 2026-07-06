@@ -3,8 +3,8 @@ import { Container } from "@/components/layout/container";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { getContactLinks } from "@/lib/content";
 
-export function SiteFooter() {
-  const contactLinks = getContactLinks();
+export async function SiteFooter() {
+  const contactLinks = await getContactLinks();
   const year = new Date().getFullYear();
 
   return (

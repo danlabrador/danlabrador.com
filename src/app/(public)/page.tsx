@@ -13,11 +13,14 @@ import {
 } from "@/lib/content";
 import { buttonVariants } from "@/components/ui/button";
 
-export default function HomePage() {
-  const about = getAbout();
-  const projects = getFeaturedProjects();
-  const skills = getSkills();
-  const posts = getPublishedPosts().slice(0, 4);
+export default async function HomePage() {
+  const [about, projects, skills, allPosts] = await Promise.all([
+    getAbout(),
+    getFeaturedProjects(),
+    getSkills(),
+    getPublishedPosts(),
+  ]);
+  const posts = allPosts.slice(0, 4);
 
   return (
     <Container className="py-20 sm:py-28">

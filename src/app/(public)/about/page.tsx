@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { Markdown } from "@/lib/markdown";
-import { getAbout, getEducation, getExperience } from "@/lib/content";
+import { TiptapContent } from "@/lib/tiptap/render";
+import { getAbout, getAboutBodyJson, getEducation, getExperience } from "@/lib/content";
 import { formatMonthYear } from "@/lib/format";
 import { SectionHeader } from "@/components/section-header";
 
@@ -10,10 +11,13 @@ export const metadata: Metadata = {
   description: "Dan Labrador — analytics engineer, currently at My Amazon Guy.",
 };
 
-export default function AboutPage() {
-  const about = getAbout();
-  const experience = getExperience();
-  const education = getEducation();
+export default async function AboutPage() {
+  const [about, aboutBodyJson, experience, education] = await Promise.all([
+    getAbout(),
+    getAboutBodyJson(),
+    getExperience(),
+    getEducation(),
+  ]);
 
   return (
     <Container className="py-20">
@@ -26,7 +30,11 @@ export default function AboutPage() {
       </header>
 
       <section className="mt-12 max-w-2xl">
-        <Markdown>{about.bodyMarkdown}</Markdown>
+        {aboutBodyJson ? (
+          <TiptapContent json={aboutBodyJson} />
+        ) : (
+          <Markdown>{about.bodyMarkdown}</Markdown>
+        )}
       </section>
 
       <section className="mt-20">

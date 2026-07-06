@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: "Selected projects — libraries, pipelines, dashboards, and internal tools.",
 };
 
-export default function ProjectsPage() {
-  const projects = getAllProjects();
+export default async function ProjectsPage() {
+  const projects = await getAllProjects();
 
   return (
     <Container className="py-20">

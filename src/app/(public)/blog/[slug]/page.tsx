@@ -4,19 +4,23 @@ import type { Metadata } from "next";
 import { ArrowLeft, Clock } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Markdown } from "@/lib/markdown";
+import { TiptapContent } from "@/lib/tiptap/render";
 import { TableOfContents } from "@/components/toc";
 import { ShareButtons } from "@/components/share-buttons";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { extractToc } from "@/lib/toc";
 import { formatDate } from "@/lib/format";
-import { getPostBySlug, getPublishedPosts } from "@/lib/content";
+import { getPostBySlug } from "@/lib/content";
+import { seedPublishedPosts } from "@/lib/content-seed";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ?? "http://localhost:3000";
 
 export async function generateStaticParams() {
-  return getPublishedPosts().map((p) => ({ slug: p.slug }));
+  return seedPublishedPosts().map((p) => ({ slug: p.slug }));
 }
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -24,7 +28,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
   if (!post) return {};
   return {
     title: post.title,
@@ -44,10 +48,10 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  const toc = extractToc(post.bodyMarkdown);
+  const toc = post.bodyMarkdown ? extractToc(post.bodyMarkdown) : [];
   const canonical = `${SITE_URL}/blog/${post.slug}`;
 
   return (
@@ -85,7 +89,11 @@ export default async function BlogPostPage({
           </header>
 
           <section className="mt-10 max-w-2xl">
-            <Markdown>{post.bodyMarkdown}</Markdown>
+            {post.bodyJson ? (
+              <TiptapContent json={post.bodyJson} />
+            ) : (
+              <Markdown>{post.bodyMarkdown ?? ""}</Markdown>
+            )}
           </section>
 
           <footer className="mt-16 max-w-2xl border-t border-border/60 pt-8">

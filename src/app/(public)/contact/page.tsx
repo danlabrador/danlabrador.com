@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description: "Get in touch — for work, questions, or just to say hi.",
 };
 
-export default function ContactPage() {
-  const links = getContactLinks();
+export default async function ContactPage() {
+  const links = await getContactLinks();
   return (
     <Container className="py-20">
       <header className="max-w-2xl">

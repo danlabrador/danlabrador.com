@@ -4,11 +4,17 @@ import type { Metadata } from "next";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { Markdown } from "@/lib/markdown";
-import { getAllProjects, getProjectBySlug } from "@/lib/content";
+import { TiptapContent } from "@/lib/tiptap/render";
+import { getProjectBySlug } from "@/lib/content";
+import { seedAllProjects } from "@/lib/content-seed";
 
 export async function generateStaticParams() {
-  return getAllProjects().map((p) => ({ slug: p.slug }));
+  // Use seed data only for prerender scaffolding; live pages will re-render
+  // dynamically once the DB has records.
+  return seedAllProjects().map((p) => ({ slug: p.slug }));
 }
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -16,7 +22,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug);
   if (!project) return {};
   return {
     title: project.title,
@@ -30,7 +36,7 @@ export default async function ProjectPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const project = getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug);
   if (!project) notFound();
 
   return (
@@ -86,7 +92,9 @@ export default async function ProjectPage({
       </header>
 
       <section className="mt-12 max-w-2xl">
-        {project.caseStudyMarkdown ? (
+        {project.caseStudyBodyJson ? (
+          <TiptapContent json={project.caseStudyBodyJson} />
+        ) : project.caseStudyMarkdown ? (
           <Markdown>{project.caseStudyMarkdown}</Markdown>
         ) : (
           <p className="text-muted-foreground">{project.description}</p>

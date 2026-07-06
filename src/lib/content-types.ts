@@ -21,6 +21,7 @@ export type Project = {
   featured: boolean;
   displayOrder: number;
   caseStudyMarkdown?: string;
+  caseStudyBodyJson?: unknown;
 };
 
 export type Experience = {
@@ -60,7 +61,10 @@ export type Post = {
   slug: string;
   title: string;
   excerpt?: string;
-  bodyMarkdown: string;
+  /** Seed posts use markdown. */
+  bodyMarkdown?: string;
+  /** Published-via-admin posts store Tiptap JSON. */
+  bodyJson?: unknown;
   tags: string[];
   category?: string;
   status: "draft" | "published";

@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/layout/container";
 import { Markdown } from "@/lib/markdown";
+import { TiptapContent } from "@/lib/tiptap/render";
 import { formatDate } from "@/lib/format";
-import { getNow } from "@/lib/content";
+import { getNow, getNowBodyJson } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Now",
   description: "What I'm focused on right now.",
 };
 
-export default function NowPage() {
-  const now = getNow();
+export default async function NowPage() {
+  const [now, nowBodyJson] = await Promise.all([getNow(), getNowBodyJson()]);
   return (
     <Container className="py-20">
       <header className="max-w-2xl">
@@ -33,7 +34,11 @@ export default function NowPage() {
       </header>
 
       <section className="mt-10 max-w-2xl">
-        <Markdown>{now.bodyMarkdown}</Markdown>
+        {nowBodyJson ? (
+          <TiptapContent json={nowBodyJson} />
+        ) : (
+          <Markdown>{now.bodyMarkdown}</Markdown>
+        )}
       </section>
     </Container>
   );

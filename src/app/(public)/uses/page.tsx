@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description: "The tools, hardware, and software I use day-to-day.",
 };
 
-export default function UsesPage() {
-  const uses = getUses();
+export default async function UsesPage() {
+  const uses = await getUses();
   const byCategory = uses.reduce<Record<string, typeof uses>>((acc, item) => {
     (acc[item.category] ||= []).push(item);
     return acc;

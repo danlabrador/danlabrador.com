@@ -4,11 +4,14 @@ import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
 import { Container } from "@/components/layout/container";
 import { PostCard } from "@/components/post-card";
-import { getAllTags, getPublishedPosts } from "@/lib/content";
+import { getPublishedPosts } from "@/lib/content";
+import { seedAllTags } from "@/lib/content-seed";
 
 export async function generateStaticParams() {
-  return getAllTags().map((tag) => ({ tag }));
+  return seedAllTags().map((tag) => ({ tag }));
 }
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -28,7 +31,7 @@ export default async function TagPage({
   params: Promise<{ tag: string }>;
 }) {
   const { tag } = await params;
-  const posts = getPublishedPosts().filter((p) => p.tags.includes(tag));
+  const posts = (await getPublishedPosts()).filter((p) => p.tags.includes(tag));
   if (posts.length === 0) notFound();
 
   return (
