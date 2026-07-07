@@ -48,7 +48,9 @@ export async function POST(req: Request) {
         Authorization: `Token ${env.BUTTONDOWN_API_KEY()}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email_address: email, type: "regular" }),
+      // "unactivated" triggers Buttondown's confirmation flow (double opt-in);
+      // subscriber flips to "regular" once they click the link in the email.
+      body: JSON.stringify({ email_address: email, type: "unactivated" }),
     });
     // 201 = created, 400 = already subscribed (treat both as success)
     if (res.ok) {
