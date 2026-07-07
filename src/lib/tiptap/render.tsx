@@ -37,6 +37,23 @@ function stripBrokenLinks(node: MaybeNode): MaybeNode {
 }
 
 /**
+ * Drop image nodes that have no src. Otherwise Tiptap emits `<img>` with no
+ * source and the reader sees a broken image icon (or nothing at all).
+ */
+function stripBrokenImages(node: MaybeNode): MaybeNode {
+  if (Array.isArray(node.content)) {
+    node.content = node.content
+      .filter((child) => {
+        if (child.type !== "image") return true;
+        const src = child.attrs?.src;
+        return typeof src === "string" && src.length > 0;
+      })
+      .map(stripBrokenImages);
+  }
+  return node;
+}
+
+/**
  * Set an `id` attribute on every h2/h3 so TOC links can anchor to them.
  */
 function addHeadingIds(node: MaybeNode): MaybeNode {
@@ -59,7 +76,9 @@ export function TiptapContent({
   className?: string;
 }) {
   if (!json || typeof json !== "object") return null;
-  const cleaned = stripBrokenLinks(JSON.parse(JSON.stringify(json)) as MaybeNode);
+  const cleaned = stripBrokenImages(
+    stripBrokenLinks(JSON.parse(JSON.stringify(json)) as MaybeNode),
+  );
   addHeadingIds(cleaned);
   let html: string;
   try {
