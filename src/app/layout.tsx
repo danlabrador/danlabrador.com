@@ -28,10 +28,16 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "Dan Labrador",
     locale: "en_US",
+    images: [
+      `/api/og?title=${encodeURIComponent("Analytics engineer.")}&kicker=${encodeURIComponent("danlabrador.com")}`,
+    ],
   },
   twitter: {
     card: "summary_large_image",
     creator: "@danlabrador",
+    images: [
+      `/api/og?title=${encodeURIComponent("Analytics engineer.")}&kicker=${encodeURIComponent("danlabrador.com")}`,
+    ],
   },
 };
 

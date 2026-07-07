@@ -30,6 +30,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getPostBySlug(slug);
   if (!post) return {};
+  const ogImage = `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&kicker=${encodeURIComponent("Blog")}&meta=${encodeURIComponent(`${post.readingTimeMinutes} min read`)}`;
   return {
     title: post.title,
     description: post.excerpt,
@@ -38,6 +39,13 @@ export async function generateMetadata({
       description: post.excerpt,
       type: "article",
       publishedTime: post.publishedAt,
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: [ogImage],
     },
   };
 }

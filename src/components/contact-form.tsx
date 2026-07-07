@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +15,20 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+
 export function ContactForm() {
   const [pending, setPending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      toast.error("Please complete the verification.");
+      return;
+    }
+
     setPending(true);
     const form = e.currentTarget;
     const data = Object.fromEntries(new FormData(form));
@@ -27,13 +37,18 @@ export function ContactForm() {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, turnstileToken }),
       });
-      if (!res.ok) throw new Error(await res.text().catch(() => "Failed"));
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed");
+      }
       toast.success("Thanks — I'll be in touch soon.");
       form.reset();
-    } catch {
-      toast.error("Couldn't send that. Try again or email me directly.");
+      turnstileRef.current?.reset();
+      setTurnstileToken("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't send.");
     } finally {
       setPending(false);
     }
@@ -102,6 +117,16 @@ export function ContactForm() {
         <Label htmlFor="message">What would you like to build?</Label>
         <Textarea id="message" name="message" required rows={6} />
       </div>
+
+      {TURNSTILE_SITE_KEY && (
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={TURNSTILE_SITE_KEY}
+          onSuccess={setTurnstileToken}
+          onExpire={() => setTurnstileToken("")}
+          options={{ theme: "auto" }}
+        />
+      )}
 
       <Button type="submit" disabled={pending}>
         {pending ? "Sending…" : "Send message"}
