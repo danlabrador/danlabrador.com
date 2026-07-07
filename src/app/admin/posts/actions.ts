@@ -8,18 +8,16 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { slugify } from "@/lib/slug";
 import { excerptFromDoc, readingTimeMinutes } from "@/lib/reading-time";
-import { plainJson } from "@/lib/plain-json";
 
-const bodyJsonSchema = z.custom<unknown>((v) => typeof v === "object" && v !== null, {
-  message: "Invalid body",
-});
-
+// The Tiptap doc is passed as a JSON string, not as an object. Next.js 16's
+// server-action serialization strips nested `attrs` from plain objects, so
+// we send a string across the boundary and parse it here.
 const savePostSchema = z.object({
   id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
   slug: z.string().optional(),
   excerpt: z.string().optional(),
-  bodyJson: bodyJsonSchema,
+  bodyJson: z.string().min(2), // JSON-encoded Tiptap doc
   coverImageId: z.string().nullable().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
@@ -37,8 +35,13 @@ export async function savePost(input: SavePostInput) {
     return { ok: false as const, error: "Invalid input", fieldErrors: parsed.error.flatten().fieldErrors };
   }
   const data = parsed.data;
-  // Strip any React server-action proxy so Prisma can read the body safely.
-  const body = plainJson(data.bodyJson);
+
+  let body: unknown;
+  try {
+    body = JSON.parse(data.bodyJson);
+  } catch {
+    return { ok: false as const, error: "Invalid JSON body" };
+  }
 
   const slugBase = data.slug ?? slugify(data.title);
   const slug = await uniqueSlug(slugBase, data.id);

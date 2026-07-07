@@ -7,12 +7,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { slugify } from "@/lib/slug";
-import { plainJson } from "@/lib/plain-json";
-
-const bodyJsonSchema = z
-  .custom<unknown>((v) => typeof v === "object" && v !== null, { message: "Invalid body" })
-  .nullable()
-  .optional();
 
 const saveProjectSchema = z.object({
   id: z.string().optional(),
@@ -24,7 +18,8 @@ const saveProjectSchema = z.object({
   thumbnailId: z.string().nullable().optional(),
   repoUrl: z.string().url().optional().or(z.literal("")),
   liveUrl: z.string().url().optional().or(z.literal("")),
-  caseStudyBody: bodyJsonSchema,
+  // JSON-encoded Tiptap doc (or empty string for no case study).
+  caseStudyBody: z.string().default(""),
   featured: z.boolean().default(false),
   displayOrder: z.number().int().default(0),
 });
@@ -43,6 +38,15 @@ export async function saveProject(input: SaveProjectInput) {
   }
   const data = parsed.data;
 
+  let caseStudyBody: unknown = null;
+  if (data.caseStudyBody) {
+    try {
+      caseStudyBody = JSON.parse(data.caseStudyBody);
+    } catch {
+      return { ok: false as const, error: "Invalid case study JSON" };
+    }
+  }
+
   const slug = await uniqueSlug(data.slug || slugify(data.title), data.id);
 
   const project = data.id
@@ -57,7 +61,7 @@ export async function saveProject(input: SaveProjectInput) {
           thumbnailId: data.thumbnailId ?? null,
           repoUrl: data.repoUrl ? data.repoUrl : null,
           liveUrl: data.liveUrl ? data.liveUrl : null,
-          caseStudyBody: (data.caseStudyBody ? plainJson(data.caseStudyBody) : null) as never,
+          caseStudyBody: caseStudyBody as never,
           featured: data.featured,
           displayOrder: data.displayOrder,
         },
@@ -72,7 +76,7 @@ export async function saveProject(input: SaveProjectInput) {
           thumbnailId: data.thumbnailId ?? null,
           repoUrl: data.repoUrl ? data.repoUrl : null,
           liveUrl: data.liveUrl ? data.liveUrl : null,
-          caseStudyBody: (data.caseStudyBody ? plainJson(data.caseStudyBody) : null) as never,
+          caseStudyBody: caseStudyBody as never,
           featured: data.featured,
           displayOrder: data.displayOrder,
         },

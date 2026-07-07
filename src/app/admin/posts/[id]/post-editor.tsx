@@ -50,7 +50,7 @@ export function PostEditor({ post }: { post: PostForm }) {
         title: state.title,
         slug: state.slug,
         excerpt: state.excerpt,
-        bodyJson: state.bodyJson,
+        bodyJson: JSON.stringify(state.bodyJson),
         coverImageId: state.coverImage?.id ?? null,
         seoTitle: state.seoTitle,
         seoDescription: state.seoDescription,

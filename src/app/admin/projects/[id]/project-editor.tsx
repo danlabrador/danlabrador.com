@@ -56,7 +56,7 @@ export function ProjectEditor({ project }: { project: ProjectForm }) {
         thumbnailId: state.thumbnail?.id ?? null,
         repoUrl: state.repoUrl,
         liveUrl: state.liveUrl,
-        caseStudyBody: state.caseStudyBody,
+        caseStudyBody: state.caseStudyBody ? JSON.stringify(state.caseStudyBody) : "",
         featured: state.featured,
         displayOrder: state.displayOrder,
       });

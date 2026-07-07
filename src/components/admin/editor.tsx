@@ -51,7 +51,6 @@ export function TiptapEditor({
     if (!src) return;
     const alt = asset.altText ?? "";
 
-    // Insert at the saved cursor position (falls back to end of doc).
     const at = savedRange.current ?? {
       from: editor.state.doc.content.size,
       to: editor.state.doc.content.size,

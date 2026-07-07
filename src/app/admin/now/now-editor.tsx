@@ -13,7 +13,7 @@ export function NowEditor({ initial }: { initial: { body: unknown } }) {
   async function save() {
     setPending(true);
     try {
-      const res = await saveNow({ body });
+      const res = await saveNow({ body: body ? JSON.stringify(body) : "" });
       if (!res.ok) toast.error(res.error ?? "Save failed");
       else toast.success("Saved");
     } finally {

@@ -4,12 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/require-admin";
-import { plainJson } from "@/lib/plain-json";
 
 const schema = z.object({
   heroHeadline: z.string().min(1),
   heroSubheadline: z.string().optional().nullable(),
-  aboutBody: z.custom<unknown>((v) => v !== undefined, { message: "Body required" }).nullable(),
+  // JSON-encoded Tiptap doc (or empty string).
+  aboutBody: z.string().default(""),
 });
 
 export async function saveAbout(input: z.infer<typeof schema>) {
@@ -17,18 +17,28 @@ export async function saveAbout(input: z.infer<typeof schema>) {
   const parsed = schema.safeParse(input);
   if (!parsed.success) return { ok: false as const, error: "Invalid input" };
   const d = parsed.data;
+
+  let aboutBody: unknown = null;
+  if (d.aboutBody) {
+    try {
+      aboutBody = JSON.parse(d.aboutBody);
+    } catch {
+      return { ok: false as const, error: "Invalid body JSON" };
+    }
+  }
+
   await prisma.aboutContent.upsert({
     where: { id: "singleton" },
     create: {
       id: "singleton",
       heroHeadline: d.heroHeadline,
       heroSubheadline: d.heroSubheadline || null,
-      aboutBody: (d.aboutBody ? plainJson(d.aboutBody) : null) as never,
+      aboutBody: aboutBody as never,
     },
     update: {
       heroHeadline: d.heroHeadline,
       heroSubheadline: d.heroSubheadline || null,
-      aboutBody: (d.aboutBody ? plainJson(d.aboutBody) : null) as never,
+      aboutBody: aboutBody as never,
     },
   });
   revalidatePath("/");

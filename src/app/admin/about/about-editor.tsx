@@ -25,7 +25,7 @@ export function AboutEditor({ initial }: { initial: Form }) {
       const res = await saveAbout({
         heroHeadline: state.heroHeadline,
         heroSubheadline: state.heroSubheadline,
-        aboutBody: state.aboutBody,
+        aboutBody: state.aboutBody ? JSON.stringify(state.aboutBody) : "",
       });
       if (!res.ok) toast.error(res.error ?? "Save failed");
       else toast.success("Saved");
