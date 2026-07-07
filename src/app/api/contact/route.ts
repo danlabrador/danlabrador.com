@@ -84,15 +84,20 @@ export async function POST(req: Request) {
       <hr />
       <p style="color: #6b7280; font-size: 12px;">Submission ID: ${submission.id}</p>
     `;
-    await getResend().emails.send({
+    const result = await getResend().emails.send({
       from: env.RESEND_FROM(),
       to: env.CONTACT_INBOX(),
       replyTo: data.email,
       subject,
       html,
     });
+    if (result.error) {
+      console.error("[contact] Resend returned error:", JSON.stringify(result.error));
+    } else {
+      console.log("[contact] Resend sent:", result.data?.id);
+    }
   } catch (err) {
-    console.error("[contact] Resend send failed:", err);
+    console.error("[contact] Resend threw:", err);
   }
 
   return NextResponse.json({ ok: true });
