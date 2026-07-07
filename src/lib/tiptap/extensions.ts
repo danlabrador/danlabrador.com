@@ -18,6 +18,7 @@ const lowlight = createLowlight(common);
 export const tiptapExtensions = [
   StarterKit.configure({
     codeBlock: false, // replaced by CodeBlockLowlight below
+    link: false, // configured explicitly below (StarterKit v3 includes Link by default)
     heading: { levels: [2, 3, 4] },
   }),
   Link.configure({
