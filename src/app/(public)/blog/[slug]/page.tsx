@@ -8,7 +8,7 @@ import { TiptapContent } from "@/lib/tiptap/render";
 import { TableOfContents } from "@/components/toc";
 import { ShareButtons } from "@/components/share-buttons";
 import { NewsletterForm } from "@/components/newsletter-form";
-import { extractToc } from "@/lib/toc";
+import { extractToc, extractTocFromTiptap } from "@/lib/toc";
 import { formatDate } from "@/lib/format";
 import { getPostBySlug } from "@/lib/content";
 import { seedPublishedPosts } from "@/lib/content-seed";
@@ -51,7 +51,11 @@ export default async function BlogPostPage({
   const post = await getPostBySlug(slug);
   if (!post) notFound();
 
-  const toc = post.bodyMarkdown ? extractToc(post.bodyMarkdown) : [];
+  const toc = post.bodyJson
+    ? extractTocFromTiptap(post.bodyJson)
+    : post.bodyMarkdown
+      ? extractToc(post.bodyMarkdown)
+      : [];
   const canonical = `${SITE_URL}/blog/${post.slug}`;
 
   return (
@@ -63,7 +67,13 @@ export default async function BlogPostPage({
         <ArrowLeft className="size-3.5" /> All posts
       </Link>
 
-      <article className="mt-8 grid gap-12 lg:grid-cols-[1fr_180px]">
+      <article
+        className={
+          toc.length > 0
+            ? "mt-8 grid gap-12 lg:grid-cols-[1fr_180px]"
+            : "mt-8"
+        }
+      >
         <div>
           <header className="max-w-2xl">
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -115,11 +125,13 @@ export default async function BlogPostPage({
           </footer>
         </div>
 
-        <aside className="hidden lg:block">
-          <div className="sticky top-20">
-            <TableOfContents items={toc} />
-          </div>
-        </aside>
+        {toc.length > 0 && (
+          <aside className="hidden lg:block">
+            <div className="sticky top-20">
+              <TableOfContents items={toc} />
+            </div>
+          </aside>
+        )}
       </article>
     </Container>
   );

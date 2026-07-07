@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Trash2 } from "lucide-react";
+import { Trash2, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { MediaUploader } from "@/components/admin/media-uploader";
+import { MediaUploader, uploadFile } from "@/components/admin/media-uploader";
 import type { MediaAssetSummary } from "@/lib/admin/media";
+import { cn } from "@/lib/utils";
 
 export function MediaLibrary({ initial }: { initial: MediaAssetSummary[] }) {
   const [assets, setAssets] = useState(initial);
+  const [dropActive, setDropActive] = useState(false);
+  const [pending, setPending] = useState(false);
 
   async function remove(id: string) {
     if (!confirm("Delete this file? This can't be undone.")) return;
@@ -22,11 +25,48 @@ export function MediaLibrary({ initial }: { initial: MediaAssetSummary[] }) {
     toast.success("Deleted");
   }
 
+  async function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDropActive(false);
+    const files = Array.from(e.dataTransfer.files ?? []);
+    if (files.length === 0) return;
+    setPending(true);
+    try {
+      for (const file of files) {
+        const asset = await uploadFile(file);
+        setAssets((prev) => [asset, ...prev]);
+      }
+      toast.success(files.length > 1 ? `${files.length} files uploaded` : "Uploaded");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
-    <>
+    <div
+      onDragEnter={(e) => {
+        e.preventDefault();
+        setDropActive(true);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+      }}
+      onDragLeave={(e) => {
+        // Only clear when actually leaving the outer container
+        if (e.currentTarget === e.target) setDropActive(false);
+      }}
+      onDrop={onDrop}
+      className={cn(
+        "space-y-4 rounded-lg border-2 border-transparent p-1 transition-colors",
+        dropActive && "border-dashed border-foreground/40 bg-muted/30",
+      )}
+    >
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {assets.length} file{assets.length === 1 ? "" : "s"}
+          {pending && " · uploading…"}
         </p>
         <MediaUploader
           onUploaded={(asset) => setAssets((prev) => [asset, ...prev])}
@@ -34,8 +74,9 @@ export function MediaLibrary({ initial }: { initial: MediaAssetSummary[] }) {
       </div>
 
       {assets.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border/60 py-16 text-center text-sm text-muted-foreground">
-          No files yet. Upload one to get started.
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border/60 py-16 text-center text-sm text-muted-foreground">
+          <UploadCloud className="size-6" />
+          <p>Drag and drop a file here, or use the upload button.</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -81,6 +122,6 @@ export function MediaLibrary({ initial }: { initial: MediaAssetSummary[] }) {
           ))}
         </div>
       )}
-    </>
+    </div>
   );
 }

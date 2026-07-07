@@ -64,12 +64,18 @@ export function EditorToolbar({
 
   const promptLink = () => {
     const previous = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("URL", previous ?? "https://");
-    if (url === null) return;
-    if (url === "") {
+    const raw = window.prompt("URL", previous ?? "https://");
+    if (raw === null) return;
+    const trimmed = raw.trim();
+    // Empty, whitespace-only, or the placeholder itself → remove the link
+    if (trimmed === "" || trimmed === "https://" || trimmed === "http://") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
+    // Auto-prepend https:// if the user typed just a hostname
+    const url = /^([a-z][a-z0-9+.-]*:|\/\/|mailto:|tel:|#|\/)/i.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
     editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
   };
 

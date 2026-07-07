@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/require-admin";
+import { plainJson } from "@/lib/plain-json";
 
 const schema = z.object({
   heroHeadline: z.string().min(1),
@@ -22,12 +23,12 @@ export async function saveAbout(input: z.infer<typeof schema>) {
       id: "singleton",
       heroHeadline: d.heroHeadline,
       heroSubheadline: d.heroSubheadline || null,
-      aboutBody: (d.aboutBody ?? null) as never,
+      aboutBody: (d.aboutBody ? plainJson(d.aboutBody) : null) as never,
     },
     update: {
       heroHeadline: d.heroHeadline,
       heroSubheadline: d.heroSubheadline || null,
-      aboutBody: (d.aboutBody ?? null) as never,
+      aboutBody: (d.aboutBody ? plainJson(d.aboutBody) : null) as never,
     },
   });
   revalidatePath("/");

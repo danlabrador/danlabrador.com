@@ -7,6 +7,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { slugify } from "@/lib/slug";
+import { plainJson } from "@/lib/plain-json";
 
 const bodyJsonSchema = z
   .custom<unknown>((v) => typeof v === "object" && v !== null, { message: "Invalid body" })
@@ -56,7 +57,7 @@ export async function saveProject(input: SaveProjectInput) {
           thumbnailId: data.thumbnailId ?? null,
           repoUrl: data.repoUrl ? data.repoUrl : null,
           liveUrl: data.liveUrl ? data.liveUrl : null,
-          caseStudyBody: (data.caseStudyBody ?? null) as never,
+          caseStudyBody: (data.caseStudyBody ? plainJson(data.caseStudyBody) : null) as never,
           featured: data.featured,
           displayOrder: data.displayOrder,
         },
@@ -71,7 +72,7 @@ export async function saveProject(input: SaveProjectInput) {
           thumbnailId: data.thumbnailId ?? null,
           repoUrl: data.repoUrl ? data.repoUrl : null,
           liveUrl: data.liveUrl ? data.liveUrl : null,
-          caseStudyBody: (data.caseStudyBody ?? null) as never,
+          caseStudyBody: (data.caseStudyBody ? plainJson(data.caseStudyBody) : null) as never,
           featured: data.featured,
           displayOrder: data.displayOrder,
         },

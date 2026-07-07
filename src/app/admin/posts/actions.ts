@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin/require-admin";
 import { slugify } from "@/lib/slug";
 import { excerptFromDoc, readingTimeMinutes } from "@/lib/reading-time";
+import { plainJson } from "@/lib/plain-json";
 
 const bodyJsonSchema = z.custom<unknown>((v) => typeof v === "object" && v !== null, {
   message: "Invalid body",
@@ -36,6 +37,8 @@ export async function savePost(input: SavePostInput) {
     return { ok: false as const, error: "Invalid input", fieldErrors: parsed.error.flatten().fieldErrors };
   }
   const data = parsed.data;
+  // Strip any React server-action proxy so Prisma can read the body safely.
+  const body = plainJson(data.bodyJson);
 
   const slugBase = data.slug ?? slugify(data.title);
   const slug = await uniqueSlug(slugBase, data.id);
@@ -43,8 +46,8 @@ export async function savePost(input: SavePostInput) {
   const excerpt =
     data.excerpt && data.excerpt.trim().length > 0
       ? data.excerpt.trim()
-      : excerptFromDoc(data.bodyJson);
-  const readingTime = readingTimeMinutes(data.bodyJson);
+      : excerptFromDoc(body);
+  const readingTime = readingTimeMinutes(body);
 
   const publishedAt =
     data.status === "PUBLISHED" ? (await currentPublishedAt(data.id)) ?? new Date() : null;
@@ -59,7 +62,7 @@ export async function savePost(input: SavePostInput) {
           title: data.title,
           slug,
           excerpt,
-          bodyJson: data.bodyJson as never,
+          bodyJson: body as never,
           coverImageId: data.coverImageId ?? null,
           seoTitle: data.seoTitle || null,
           seoDescription: data.seoDescription || null,
@@ -77,7 +80,7 @@ export async function savePost(input: SavePostInput) {
           title: data.title,
           slug,
           excerpt,
-          bodyJson: data.bodyJson as never,
+          bodyJson: body as never,
           coverImageId: data.coverImageId ?? null,
           seoTitle: data.seoTitle || null,
           seoDescription: data.seoDescription || null,

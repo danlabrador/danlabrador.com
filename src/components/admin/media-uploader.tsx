@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { MediaAssetSummary } from "@/lib/admin/media";
 
-async function uploadFile(file: File): Promise<MediaAssetSummary> {
+export async function uploadFile(file: File): Promise<MediaAssetSummary> {
   const presign = await fetch("/api/media/upload", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

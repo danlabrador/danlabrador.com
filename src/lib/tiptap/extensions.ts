@@ -22,7 +22,18 @@ export const tiptapExtensions = [
   }),
   Link.configure({
     openOnClick: false,
+    autolink: true,
+    linkOnPaste: true,
+    defaultProtocol: "https",
     HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
+    // Only accept link marks with a real URL. Pastes from Notion /
+    // Google Docs / some web pages sometimes preserve link styling but
+    // drop the href — this rejects those so we don't store dead anchors.
+    isAllowedUri: (url) =>
+      typeof url === "string" &&
+      url.trim().length > 0 &&
+      url !== "https://" &&
+      url !== "http://",
   }),
   Image,
   Placeholder.configure({ placeholder: "Write something..." }),
