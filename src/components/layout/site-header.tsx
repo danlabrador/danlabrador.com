@@ -18,26 +18,37 @@ export function SiteHeader() {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-md">
       <Container className="flex h-14 items-center justify-between">
-        <Link href="/" className="font-semibold tracking-tight">
+        <Link
+          href="/"
+          className="text-sm font-semibold tracking-tight transition-opacity hover:opacity-80"
+        >
           Dan Labrador
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.filter((l) => l.href !== "/").map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground",
-                isActive(link.href) && "text-foreground",
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-          <ThemeToggle />
+        <nav className="hidden items-center gap-0.5 md:flex">
+          {NAV_LINKS.filter((l) => l.href !== "/").map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "relative rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground",
+                  active && "text-foreground",
+                )}
+              >
+                {link.label}
+                {active && (
+                  <span className="absolute inset-x-3 -bottom-[13px] h-px bg-foreground" />
+                )}
+              </Link>
+            );
+          })}
+          <div className="ml-1">
+            <ThemeToggle />
+          </div>
         </nav>
 
         <div className="flex items-center gap-1 md:hidden">
@@ -62,8 +73,8 @@ export function SiteHeader() {
                 href={link.href}
                 onClick={() => setOpen(false)}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground",
-                  isActive(link.href) && "text-foreground",
+                  "rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+                  isActive(link.href) && "bg-muted/40 text-foreground",
                 )}
               >
                 {link.label}

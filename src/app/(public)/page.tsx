@@ -25,12 +25,15 @@ export default async function HomePage() {
   return (
     <Container className="py-20 sm:py-28">
       <section className="max-w-2xl">
-        <p className="mb-4 text-sm text-muted-foreground">Dan Labrador</p>
+        <div className="mb-5 inline-flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="inline-block size-1.5 rounded-full bg-emerald-500" />
+          Available for new work
+        </div>
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
           {about.heroHeadline}
         </h1>
         {about.heroSubheadline && (
-          <p className="mt-6 text-lg text-muted-foreground">
+          <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
             {about.heroSubheadline}
           </p>
         )}
@@ -44,7 +47,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mt-24">
+      <section className="mt-20">
         <SectionHeader title="Selected work" href="/projects" hrefLabel="All projects" />
         <div className="grid gap-3 sm:grid-cols-2">
           {projects.map((project) => (
@@ -53,7 +56,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mt-24">
+      <section className="mt-20">
         <SectionHeader title="Skills" />
         <ul className="flex flex-wrap gap-2">
           {skills.map((skill) => (
@@ -63,7 +66,7 @@ export default async function HomePage() {
       </section>
 
       {posts.length > 0 && (
-        <section className="mt-24">
+        <section className="mt-20">
           <SectionHeader title="Writing" href="/blog" hrefLabel="All posts" />
           <div className="divide-y divide-border/60">
             {posts.map((post) => (
